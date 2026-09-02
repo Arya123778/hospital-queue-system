@@ -38,6 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
+    'patients',
+    'doctors',
+    'queue_management',
+    'notifications',
+    'appointments',
+    'analytics',
 ]
 
 AUTH_USER_MODEL="accounts.User"
