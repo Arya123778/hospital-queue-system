@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Token</title>
+</head>
+<body>
+    <h2>Create New Queue Token</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <label>Doctor:</label>
+        <select name="doctor_id" required>
+            {% for doctor in doctors %}
+                <option value="{{ doctor.id }}">{{doctor.name}} ({{doctor.specialization}})</option>
+            {% endfor %}
+        </select>
+        <br></br>
+        <label>Patient:</label>
+        <select name="priority_level">
+            {% for value, label in priority_choices %}
+                <option value="{{ value }}">{{label}}</option>
+            {% endfor %} 
+        </select>
+        <br></br>
+        <button type="submit">Create Token</button>
+    </form>
+</body>
+</html>
+   
