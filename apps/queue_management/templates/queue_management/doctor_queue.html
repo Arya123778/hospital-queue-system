@@ -5,6 +5,10 @@
 </head>
 <body>
     <h2>Live Queue for Dr. {{doctor.name}} ({{doctor.specialization}})</h2>
+     <form method="POST" action="{% url 'queue_management:call_next' doctor.id %}">
+        {% csrf_token %}
+        <button type="submit">Call Next Patient</button>
+    </form>
     <table border="1" cellpadding="8">
         <tr>
             <th>Token #</th>
@@ -27,5 +31,18 @@
         </tr>
         {% endfor %}
     </table>
+    <h3>Currently Serving</h3>
+    {%if currently_serving%}
+       <p>
+           Token #{{currently_serving.token_number}} - {{currently_serving.name}}
+           ({{currently_serving.get_priority_level_display}})
+           <form method="POST" action="{%url 'queue_management:complete_entry' currently_serving.id %}" style="display:inline;">
+              {%csrf_token%}
+              <button type="submit">Mark Completed</button>
+           </form>
+        </p>
+        {%else%}
+           <p>No patient currently being served</p>
+        {%endif%}
 </body>
 </html>

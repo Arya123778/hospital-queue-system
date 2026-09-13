@@ -1,5 +1,6 @@
 from django.db.models import Case, When, Value, IntegerField
 from .models import QueueEntry
+from django.utils import timezone
 
 
 #define the real priority order: lower number=seen first
@@ -44,3 +45,29 @@ def assign_priority(queue_entry, new_priority):
     queue_entry.priority_level=new_priority
     queue_entry.save(update_fields=["priority_level"])
     return queue_entry
+
+def call_next_patient(doctor):
+   """Picks the next patient in line (using our real priority order) and marks them as IN_PROGRESS with a timestamp."""
+   
+   next_entry=get_ordered_queue(doctor).first()
+   if not next_entry:
+       return None
+   
+   next_entry.status=QueueEntry.Status.IN_PROGRESS
+   next_entry.called=timezone.now()
+   next_entry.save(update_fields=["status", "called_at"])
+   return next_entry
+
+def complete_queue_entry(queue_entry):
+    """Marks a queue entry as completed, once the doctor is done seeing them."""
+    queue_entry.status=QueueEntry.Status.COMPLETED
+    queue_entry.completed_at=timezone.now()
+    queue_entry.save(update_fields=["status", "completed_at"])
+    return queue_entry
+
+def get_currently_serving(doctor):
+    """Returns the patient currently IN_PROGRESS for this doctor, if any."""
+    return QueueEntry.objects.filter(
+        doctor=doctor,
+        status=QueueEntry.Status.IN_PROGRESS,
+    ).first()
