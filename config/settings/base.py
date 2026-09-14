@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'appointments',
     'analytics',
     'api',
+    'channels',
 ]
 
 AUTH_USER_MODEL="accounts.User"
@@ -78,6 +79,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION="config.asgi.application"
 
 
 # Database
@@ -134,5 +136,15 @@ STATIC_URL = 'static/'
 MAILERS = {
     'default': {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+    },
+}
+
+
+CHANNEL_LAYERS={
+    "default":{
+        "BACKEND":"channels_redis.core.RedisChannelLayer",
+        "CONFIG":{
+            "hosts":[("127.0.0.1", 6379)],
+        },
     },
 }
