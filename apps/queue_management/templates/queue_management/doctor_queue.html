@@ -4,6 +4,26 @@
     <title>Queue - {{doctor.name}}</title>
 </head>
 <body>
+    <script>
+    const doctorId = "{{ doctor.id }}";
+    const socket = new WebSocket(`ws://${window.location.host}/ws/queue/${doctorId}/`);
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        console.log("Live update received:", data);
+        // For now, simplest approach: reload the page to reflect new data.
+        // We'll replace this with smoother DOM updates in the next step.
+        location.reload();
+    };
+
+    socket.onopen = function() {
+        console.log("Connected to live queue updates.");
+    };
+
+    socket.onerror = function(error) {
+        console.log("WebSocket error:", error);
+    };
+    </script>
     <h2>Live Queue for Dr. {{doctor.name}} ({{doctor.specialization}})</h2>
      <form method="POST" action="{% url 'queue_management:call_next' doctor.id %}">
         {% csrf_token %}

@@ -2,7 +2,14 @@ from django.shortcuts import render,redirect, get_object_or_404
 from doctors.models import Doctor
 from patients.models import Patient
 from .models import QueueEntry
-from .services import generate_token_number, get_ordered_queue, call_next_patient, complete_queue_entry,get_currently_serving
+from .services import (
+    generate_token_number,
+    get_ordered_queue,
+    call_next_patient,
+    complete_queue_entry,
+    get_currently_serving,
+    broadcast_queue_update,
+)
 
 
 def create_token_view(request):
@@ -52,7 +59,7 @@ def complete_entry_view(request, entry_id):
     entry=get_object_or_404(QueueEntry, id=entry_id)
     doctor_id=entry.doctor.id
     complete_queue_entry(entry)
-    return redirect("queue_management: doctor_queue", doctor_id=doctor_id)
+    return redirect("queue_management:doctor_queue", doctor_id=doctor_id)
 
 def doctor_queue_view(request, doctor_id):
     doctor=get_object_or_404(Doctor, id=doctor_id)
@@ -64,4 +71,5 @@ def doctor_queue_view(request, doctor_id):
         "currently_serving":currently_serving,
     }
     return render(request, "queue_management/doctor_queue.html", context)
+
     

@@ -1,6 +1,8 @@
 from django.db.models import Case, When, Value, IntegerField
 from .models import QueueEntry
 from django.utils import timezone
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 
 #define the real priority order: lower number=seen first
@@ -71,3 +73,46 @@ def get_currently_serving(doctor):
         doctor=doctor,
         status=QueueEntry.Status.IN_PROGRESS,
     ).first()
+    
+def broadcast_queue_update(doctor):
+    """
+    Pushes the doctor's current queue state to everyone
+    connected to that doctor's WebSocket group.
+    """
+    from api.v1.serializers.queue_serializers import QueueEntrySerializer
+
+    channel_layer = get_channel_layer()
+    queue_entries = get_ordered_queue(doctor)
+    serialized_data = QueueEntrySerializer(queue_entries, many=True).data
+    currently_serving = get_currently_serving(doctor)
+    serving_data = QueueEntrySerializer(currently_serving).data if currently_serving else None
+
+    async_to_sync(channel_layer.group_send)(
+        f"doctor_queue_{doctor.id}",
+        {
+            "type": "queue_update",
+            "data": {
+                "queue_entries": serialized_data,
+                "currently_serving": serving_data,
+            },
+        },
+    )
+    
+def call_next_patient(doctor):
+    next_entry = get_ordered_queue(doctor).first()
+    if not next_entry:
+        return None
+
+    next_entry.status = QueueEntry.Status.IN_PROGRESS
+    next_entry.called_at = timezone.now()
+    next_entry.save(update_fields=["status", "called_at"])
+    broadcast_queue_update(doctor)
+    return next_entry
+
+
+def complete_queue_entry(queue_entry):
+    queue_entry.status = QueueEntry.Status.COMPLETED
+    queue_entry.completed_at = timezone.now()
+    queue_entry.save(update_fields=["status", "completed_at"])
+    broadcast_queue_update(queue_entry.doctor)
+    return queue_entry
